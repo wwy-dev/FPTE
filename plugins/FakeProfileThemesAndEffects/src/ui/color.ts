@@ -6,10 +6,22 @@ import type { EmptyObject } from "@lib/utils";
 
 export const semanticColors: Record<string, EmptyObject> = _semanticColors;
 
-export const resolveSemanticColor: (theme: Theme, semanticColor: EmptyObject) => string
-    = find(m => m.default?.internal?.resolveSemanticColor)?.default.internal.resolveSemanticColor
-    ?? find(m => m.meta?.resolveSemanticColor)?.meta.resolveSemanticColor
-    ?? (() => undefined);
+// Extracción segura del resolver interno de Discord
+const getRawResolver = () => 
+    find(m => m.default?.internal?.resolveSemanticColor)?.default.internal.resolveSemanticColor
+    ?? find(m => m.meta?.resolveSemanticColor)?.meta.resolveSemanticColor;
+
+export const resolveSemanticColor = (theme: Theme, semanticColor: EmptyObject): string => {
+    if (!theme || !semanticColor || typeof semanticColor !== "object") {
+        return "";
+    }
+    try {
+        const resolver = getRawResolver();
+        return resolver ? resolver(theme, semanticColor) : "";
+    } catch {
+        return "";
+    }
+};
 
 export const useAvatarColors: (
     avatarUrl: string,
@@ -22,7 +34,7 @@ export const useAvatarColors: (
 export type Theme = "dark" | "light" | "midnight" | "darker";
 
 export const getProfileTheme: <T extends number | null | undefined>(primaryColor: T) => T extends number ? Theme : null
-    = findByProps("getProfileTheme").getProfileTheme;
+    = findByProps("getProfileTheme")?.getProfileTheme ?? (() => null);
 
 export interface ThemeContext {
     theme: Theme;
