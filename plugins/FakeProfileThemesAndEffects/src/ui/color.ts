@@ -6,10 +6,19 @@ import type { EmptyObject } from "@lib/utils";
 
 export const semanticColors: Record<string, EmptyObject> = _semanticColors;
 
-export const resolveSemanticColor: (theme: Theme, semanticColor: EmptyObject) => string
-    = find(m => m.default?.internal?.resolveSemanticColor)?.default.internal.resolveSemanticColor
-    ?? find(m => m.meta?.resolveSemanticColor)?.meta.resolveSemanticColor
-    ?? (() => undefined);
+const rawResolver = find(m => m.default?.internal?.resolveSemanticColor)?.default?.internal?.resolveSemanticColor
+    ?? find(m => m.meta?.resolveSemanticColor)?.meta?.resolveSemanticColor;
+
+export const resolveSemanticColor = (theme: Theme, semanticColor: EmptyObject): string => {
+    if (!theme || !semanticColor || typeof semanticColor !== "object") {
+        return "#000000";
+    }
+    try {
+        return rawResolver ? rawResolver(theme, semanticColor) : "#000000";
+    } catch {
+        return "#000000";
+    }
+};
 
 export const useAvatarColors: (
     avatarUrl: string,
@@ -17,12 +26,13 @@ export const useAvatarColors: (
     desaturateColors?: boolean | undefined /* = true */
 ) => string[]
     = (findByProps("useAvatarColors") as Record<string, any> | undefined)?.useAvatarColors
-    ?? (() => undefined);
+    ?? (() => []);
 
 export type Theme = "dark" | "light" | "midnight" | "darker";
 
 export const getProfileTheme: <T extends number | null | undefined>(primaryColor: T) => T extends number ? Theme : null
-    = findByProps("getProfileTheme").getProfileTheme;
+    = (findByProps("getProfileTheme") as Record<string, any> | undefined)?.getProfileTheme
+    ?? (() => null);
 
 export interface ThemeContext {
     theme: Theme;
@@ -45,10 +55,17 @@ export interface ThemeContext {
 
 export const useThemeContext: () => ThemeContext
     = (findByProps("useThemeContext") as Record<string, any> | undefined)?.useThemeContext
-    ?? (() => ({}));
+    ?? (() => ({
+        theme: "dark",
+        primaryColor: null,
+        secondaryColor: null,
+        gradient: null,
+        flags: 0,
+        key: ""
+    }));
 
 export type ThemeContextProviderProps = PropsWithChildren<Partial<ThemeContext>>;
 
 export const ThemeContextProvider: ComponentType<ThemeContextProviderProps>
     = (findByProps("ThemeContextProvider") as Record<string, any> | undefined)?.ThemeContextProvider
-    ?? (({ children }) => children);
+    ?? (({ children }) => children as any);
